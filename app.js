@@ -16,13 +16,14 @@ import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstati
 
 // تذكري وضع مفاتيح مشروعك الحقيقية هنا بدلاً من YOUR_TOKEN_HERE
 const firebaseConfig = {
-  apiKey: "YOUR_TOKEN_HERE",
-  authDomain: "YOUR_TOKEN_HERE",
-  projectId: "YOUR_TOKEN_HERE",
-  storageBucket: "YOUR_TOKEN_HERE",
-  messagingSenderId: "YOUR_TOKEN_HERE",
-  appId: "YOUR_TOKEN_HERE",
-  measurementId: "YOUR_TOKEN_HERE"
+    
+  apiKey: "AIzaSyDoO0MMShBazdTmG1CCLEMjGAzeM16-dFI",
+  authDomain: "market-21ede.firebaseapp.com",
+  projectId: "market-21ede",
+  storageBucket: "market-21ede.firebasestorage.app",
+  messagingSenderId: "113074265984",
+  appId: "1:113074265984:web:d65051410bd4e551b9eb65",
+  measurementId: "G-ED4ZFZ140D"
 };
 
 const app = initializeApp(firebaseConfig);
