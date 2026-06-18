@@ -1,81 +1,140 @@
 /* ============================================================================
-   ملف التنسيقات الأساسي (style.css) - نسخة خالية من @apply
+   style.css | بقالة البيت – الحزمة الثانية
    ============================================================================ */
 
-/* 1. استيراد خط عربي احترافي (Tajawal) ليتناسب مع تصميم البقالة */
+/* ── 1. خط Tajawal ── */
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
 
-/* 2. الإعدادات العامة للصفحة */
 body {
-    font-family: 'Tajawal', sans-serif;
-    background-color: #f9fafb; /* لون خلفية مريح للعين (gray-50) */
-    margin: 0;
-    padding: 0;
-    -webkit-font-smoothing: antialiased;
+  font-family: 'Tajawal', sans-serif;
+  background-color: #f9fafb;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* 3. تخصيص شريط التمرير (Scrollbar) ليكون أنيقاً ومتناسقاً */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
+/* ── 2. شريط التمرير ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1; /* لون رمادي فاتح */
-    border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background-color: #94a3b8;
-}
-
-/* 4. حركات النوافذ المنبثقة (Modals Animations) */
-/* هذه الفئات نستخدمها لإعطاء تأثير ظهور ناعم بدلاً من الظهور المفاجئ */
-.modal-overlay {
-    animation: fadeIn 0.2s ease-out forwards;
-}
-
-.modal-content {
-    animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
+/* ── 3. حركات النوافذ المنبثقة ── */
+.modal-overlay { animation: fadeIn 0.2s ease-out forwards; }
+.modal-content { animation: scaleUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
-
 @keyframes scaleUp {
-    from { 
-        opacity: 0; 
-        transform: scale(0.95) translateY(10px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: scale(1) translateY(0); 
-    }
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
 }
 
-/* 5. حركة إشعار التنبيه (Toast Animation) */
-#toast {
-    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* ── 4. درج السلة (RTL: يأتي من اليمين) ── */
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0);    }
+}
+.cart-drawer { animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+/* ── 5. إشعار Toast ── */
+#toast { animation: toastIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
 }
 
-@keyframes slideUp {
-    from { 
-        opacity: 0; 
-        transform: translate(-50%, 20px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: translate(-50%, 0); 
-    }
+/* ── 6. لوحة المدير (تصعد من الأسفل) ── */
+@keyframes slideUpFull {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0);    }
+}
+.admin-panel-slide { animation: slideUpFull 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+/* ── 7. حقول المدير (يُستخدم مع Tailwind CDN: لا @apply) ── */
+.admin-label {
+  display: block;
+  color: #4b5563;
+  font-weight: 600;
+  margin-bottom: 0.375rem;   /* mb-1.5 */
+  font-size: 0.875rem;        /* text-sm */
+  line-height: 1.25rem;
+}
+.admin-input {
+  width: 100%;
+  border: 2px solid #e5e7eb;  /* border-gray-200 */
+  border-radius: 0.75rem;      /* rounded-xl */
+  padding: 0.625rem 1rem;      /* py-2.5 px-4 */
+  font-size: 0.875rem;
+  font-family: 'Tajawal', sans-serif;
+  color: #1f2937;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.admin-input:focus { border-color: #16a34a; }
+
+/* ── 8. شريط الباقات الترويجية (أفقي مخفي الشريط) ── */
+.bundles-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  padding-bottom: 4px;        /* مساحة للظل */
+}
+.bundles-scroll::-webkit-scrollbar { display: none; }
+
+/* بطاقة الباقة */
+.bundle-card {
+  flex-shrink: 0;
+  width: 220px;
+  scroll-snap-align: start;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.bundle-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
 }
 
-/* 6. تحسينات عامة للصور */
-img {
-    -webkit-user-drag: none; /* منع سحب الصور بالماوس */
+/* ── 9. عنصر الخصم داخل السلة ── */
+.cart-discount-item {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1px dashed #86efac;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
 }
+
+/* ── 10. شارات حالة الطلب ── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.status-pending  { background: #fef9c3; color: #a16207; }
+.status-confirm  { background: #dcfce7; color: #15803d; }
+.status-prep     { background: #dbeafe; color: #1d4ed8; }
+.status-transit  { background: #f3e8ff; color: #7e22ce; }
+.status-done     { background: #d1fae5; color: #065f46; }
+.status-cancel   { background: #fee2e2; color: #b91c1c; }
+
+/* ── 11. بطاقة المنتج – تحسين الحركة ── */
+.product-card-wrapper {
+  transition: transform 0.18s ease;
+}
+.product-card-wrapper:hover { transform: translateY(-2px); }
+
+/* ── 12. صورة المنتج – تحسين التحميل ── */
+.product-img {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  transition: opacity 0.3s ease;
+}
+.product-img.loaded { background: transparent; }
+
+img { -webkit-user-drag: none; }
