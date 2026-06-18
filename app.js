@@ -228,7 +228,24 @@ ${orderDetails}
 -------------------------
 💰 *الإجمالي:* *${total.toFixed(2)} ريال*
         `;
+// ==========================================
+        // إضافة: حفظ الطلب في Firestore مع صاعق التدمير الذاتي
+        // ==========================================
+        const expireDate = new Date();
+        expireDate.setDate(expireDate.getDate() + 30); // تحديد العمر الافتراضي بـ 30 يوماً
 
+        const orderId = "ORD-" + Math.floor(Math.random() * 1000000); // توليد رقم طلب عشوائي لتتبعه لاحقاً
+
+        await addDoc(collection(db, "orders"), {
+            orderId: orderId,
+            customerName: name,
+            phone: phone,
+            notes: notes || 'لا يوجد',
+            totalAmount: total,
+            status: "قيد المراجعة", // الحالة المبدئية للطلب
+            expireAt: expireDate    // الحقل الذي يراقبه محرك الـ TTL
+        });
+        // ==========================================
         // 3. إرسال لتيليجرام
   // الكود الجديد للاتصال بالخادم الوسيط (Proxy)
         const response = await fetch('/api/telegram', {
