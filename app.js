@@ -574,7 +574,7 @@ function renderBundles() {
         <img src="${imgSrc}" alt="${b.name}"
              class="w-full h-32 object-cover"
              loading="lazy"
-             onerror="this.src='https://via.placeholder.com/280x128?text=باقة'">
+             onerror="this.src='https://placehold.co/280x128/e2e8f0/94a3b8?text=Bundle'">
         ${saving ? `<div class="absolute top-2 right-2">
           <span class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
             وفّر ${saving} ريال
