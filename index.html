@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🛒 بقالة البيت</title>
 
-  <!-- ── Google Fonts: Tajawal ── -->
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
 
-  <!-- ── Tailwind CSS Play CDN ── -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -30,25 +28,16 @@
     };
   </script>
 
-  <!-- ── FontAwesome Icons ── -->
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-  />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-  <!-- ── Custom Styles ── -->
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body class="bg-gray-50 font-tajawal text-gray-800 min-h-screen">
 
-<!-- ══════════════════════════════════════════════════════════
-     🏪  الهيدر (Header)
-════════════════════════════════════════════════════════════ -->
 <header class="bg-brand-600 text-white shadow-lg sticky top-0 z-40">
   <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
 
-    <!-- اللوجو والاسم -->
     <div class="flex items-center gap-3">
       <div class="bg-white/20 rounded-xl w-10 h-10 flex items-center justify-center">
         <i class="fas fa-store text-xl"></i>
@@ -59,464 +48,260 @@
       </div>
     </div>
 
-    <!-- زر فتح السلة -->
-    <button
-      id="cartBtn"
-      onclick="openCart()"
-      class="relative bg-white text-brand-600 px-4 py-2 rounded-xl font-bold
-             flex items-center gap-2 hover:bg-green-50 active:scale-95 transition-all shadow-sm"
-    >
-      <i class="fas fa-shopping-cart text-lg"></i>
-      <span class="hidden sm:inline">سلتي</span>
-      <!-- عداد السلة -->
-      <span
-        id="cartCount"
-        class="hidden absolute -top-2 -left-2 bg-red-500 text-white text-xs
-               font-bold rounded-full w-5 h-5 items-center justify-center shadow-sm"
-      >0</span>
-    </button>
+    <div class="flex items-center gap-3">
+      <button onclick="openOrderTracking()" class="relative bg-white/10 hover:bg-white/20 px-3 py-2 rounded-xl transition-all shadow-sm flex items-center gap-2">
+        <i class="fas fa-box-open text-lg"></i>
+        <span class="hidden sm:inline">طلباتي</span>
+        <span id="orderBadge" class="hidden absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] font-bold rounded-full w-5 h-5 items-center justify-center shadow-sm border-2 border-brand-600">0</span>
+      </button>
+
+      <button id="cartBtn" onclick="openCart()" class="relative bg-white text-brand-600 px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-green-50 active:scale-95 transition-all shadow-sm">
+        <i class="fas fa-shopping-cart text-lg"></i>
+        <span class="hidden sm:inline">سلتي</span>
+        <span id="cartCount" class="hidden absolute -top-2 -left-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 items-center justify-center shadow-sm">0</span>
+      </button>
+    </div>
   </div>
 </header>
 
-
-<!-- ══════════════════════════════════════════════════════════
-     🛒  المحتوى الرئيسي — عرض المنتجات
-════════════════════════════════════════════════════════════ -->
 <main class="max-w-6xl mx-auto px-4 py-8">
 
-  <!-- عنوان القسم -->
-  <div class="text-center mb-8">
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">منتجاتنا الطازجة</h2>
-    <p class="text-gray-500">اختر ما تحتاجه وأضفه إلى سلتك 🧺</p>
+  <section id="bundlesSection" class="hidden mb-12">
+    <div class="flex items-center gap-2 mb-4">
+      <i class="fas fa-gift text-2xl text-amber-500"></i>
+      <h2 class="text-2xl font-bold text-gray-800">عروض وباقات التوفير</h2>
+    </div>
+    <div class="bundles-scroll">
+      <div id="bundlesGrid" class="flex gap-4 pb-2"></div>
+    </div>
+  </section>
+
+  <div class="mb-6 flex items-center gap-2 border-b border-gray-200 pb-3">
+    <i class="fas fa-carrot text-2xl text-brand-600"></i>
+    <h2 class="text-2xl font-bold text-gray-800">منتجاتنا الطازجة</h2>
   </div>
 
-  <!-- حالة: جارٍ التحميل -->
   <div id="loadingState" class="flex flex-col items-center justify-center py-24 gap-4">
     <div class="w-12 h-12 border-4 border-green-200 border-t-brand-600 rounded-full animate-spin"></div>
     <p class="text-gray-400 text-lg">جارٍ تحميل المنتجات…</p>
   </div>
 
-  <!-- حالة: لا توجد منتجات -->
   <div id="emptyState" class="hidden flex-col items-center justify-center py-24 gap-3">
     <i class="fas fa-box-open text-7xl text-gray-200"></i>
     <h3 class="text-xl font-bold text-gray-400">لا توجد منتجات حالياً</h3>
-    <p class="text-gray-400 text-sm">لم يُضَف أي منتج بعد</p>
   </div>
 
-  <!-- حالة: خطأ في الاتصال -->
   <div id="errorState" class="hidden flex-col items-center justify-center py-24 gap-3">
     <i class="fas fa-wifi text-5xl text-red-300"></i>
-    <h3 class="text-xl font-bold text-red-400">خطأ في الاتصال بالخادم</h3>
-    <p id="errorMsg" class="text-gray-400 text-sm text-center max-w-xs">تحقق من إعدادات Firebase</p>
-    <button onclick="retryConnection()" class="mt-2 bg-brand-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-brand-700 transition text-sm">
-      <i class="fas fa-redo ml-1"></i> إعادة المحاولة
+    <h3 class="text-xl font-bold text-red-400">خطأ في الاتصال</h3>
+    <button onclick="retryConnection()" class="mt-2 bg-brand-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-brand-700 transition">
+      إعادة المحاولة
     </button>
   </div>
 
-  <!-- ✅ شبكة المنتجات (تُملأ ديناميكياً من app.js) -->
-  <div
-    id="productsGrid"
-    class="hidden grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
-  >
-  </div>
+  <div id="productsGrid" class="hidden grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
 </main>
 
-
-<!-- ══════════════════════════════════════════════════════════
-     📌  الفوتر (Footer) — يحوي مشغِّل لوحة التحكم المخفي
-════════════════════════════════════════════════════════════ -->
 <footer class="bg-gray-900 text-white mt-16 py-6">
   <div class="max-w-6xl mx-auto px-4 text-center">
-    <p class="text-gray-400 text-sm">© 2024 بقالة البيت · جميع الحقوق محفوظة</p>
-    <!--
-      🔐 مشغِّل لوحة التحكم السري:
-         5 نقرات متتالية على نص الإصدار خلال 3 ثوانٍ
-    -->
-    <p
-      id="adminTrigger"
-      class="text-gray-700 text-xs mt-2 inline-block px-3 py-1 cursor-default select-none"
-      onclick="handleAdminTriggerClick()"
-    >
-      v1.0.0
+    <p class="text-gray-400 text-sm">© 2026 بقالة البيت · جميع الحقوق محفوظة</p>
+    <p id="adminTrigger" class="text-gray-700 text-xs mt-2 inline-block px-3 py-1 cursor-default select-none" onclick="handleAdminTriggerClick()">
+      v2.0.0
     </p>
   </div>
 </footer>
 
-
-<!-- ══════════════════════════════════════════════════════════
-     🛒  درج سلة التسوق  (Cart Drawer)
-         يظهر من الجهة اليمنى في التصميم RTL
-════════════════════════════════════════════════════════════ -->
-<div id="cartModal" class="fixed inset-0 z-50 hidden">
-  <!-- خلفية شفافة -->
-  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeCart()"></div>
-
-  <!-- محتوى الدرج -->
-  <div class="cart-drawer absolute top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl flex flex-col">
-
-    <!-- رأس الدرج -->
-    <div class="bg-brand-600 text-white p-4 flex items-center justify-between flex-shrink-0">
-      <h2 class="text-xl font-bold flex items-center gap-2">
-        <i class="fas fa-shopping-cart"></i> سلة التسوق
-      </h2>
-      <button
-        onclick="closeCart()"
-        class="w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 transition flex items-center justify-center"
-      >
+<div id="orderTrackingModal" class="modal-backdrop fixed inset-0 z-60 hidden items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeOrderTracking()"></div>
+  <div class="modal-content relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
+    <div class="bg-gradient-to-r from-gray-800 to-gray-700 text-white p-4 flex items-center justify-between">
+      <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-route"></i> طلباتي السابقة</h2>
+      <button onclick="closeOrderTracking()" class="w-8 h-8 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center">
         <i class="fas fa-times text-lg"></i>
       </button>
     </div>
+    <div id="myOrdersList" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50"></div>
+  </div>
+</div>
 
-    <!-- قائمة العناصر (تُملأ ديناميكياً) -->
+<div id="cartModal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeCart()"></div>
+  <div class="cart-drawer absolute top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl flex flex-col">
+    <div class="bg-brand-600 text-white p-4 flex items-center justify-between flex-shrink-0">
+      <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-shopping-cart"></i> سلة التسوق</h2>
+      <button onclick="closeCart()" class="w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 transition flex items-center justify-center">
+        <i class="fas fa-times text-lg"></i>
+      </button>
+    </div>
     <div id="cartItems" class="flex-1 overflow-y-auto p-4"></div>
-
-    <!-- ملخص وزر الدفع -->
     <div class="border-t border-gray-100 p-4 bg-gray-50 flex-shrink-0">
       <div class="flex justify-between items-center mb-3">
         <span class="text-gray-600 font-semibold">المجموع الكلي:</span>
         <span id="cartTotal" class="text-2xl font-bold text-brand-600">0.00 ريال</span>
       </div>
-      <button
-        id="checkoutBtn"
-        onclick="openOrderModal()"
-        disabled
-        class="w-full bg-brand-600 text-white py-3 rounded-xl font-bold text-lg
-               hover:bg-brand-700 active:scale-[0.98] transition-all
-               disabled:opacity-50 disabled:cursor-not-allowed
-               flex items-center justify-center gap-2"
-      >
+      <button id="checkoutBtn" onclick="openOrderModal()" disabled class="w-full bg-brand-600 text-white py-3 rounded-xl font-bold text-lg hover:bg-brand-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
         <i class="fas fa-check-circle"></i> إتمام الطلب
       </button>
     </div>
   </div>
 </div>
 
-
-<!-- ══════════════════════════════════════════════════════════
-     📝  نافذة تأكيد الطلب  (Order Confirmation Modal)
-════════════════════════════════════════════════════════════ -->
 <div id="orderModal" class="modal-backdrop fixed inset-0 z-60 hidden items-center justify-center p-4">
   <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeOrderModal()"></div>
   <div class="modal-content relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-
-    <!-- رأس النافذة -->
     <div class="bg-gradient-to-r from-brand-700 to-brand-500 text-white p-5">
-      <h2 class="text-xl font-bold flex items-center gap-2">
-        <i class="fas fa-clipboard-list"></i> تأكيد الطلب
-      </h2>
-      <p class="text-green-100 text-sm mt-0.5">أدخل بياناتك لإرسال الطلب</p>
+      <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-clipboard-list"></i> تأكيد الطلب</h2>
     </div>
-
     <div class="p-6 space-y-4">
-      <!-- الاسم -->
       <div>
-        <label class="block text-gray-600 font-semibold mb-1.5 text-sm">
-          <i class="fas fa-user text-brand-600 ml-1"></i>
-          الاسم الكريم <span class="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          id="customerName"
-          placeholder="أدخل اسمك الكريم"
-          autocomplete="name"
-          class="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm
-                 focus:border-brand-500 focus:outline-none transition"
-        />
+        <label class="block text-gray-600 font-semibold mb-1.5 text-sm"><i class="fas fa-user text-brand-600 ml-1"></i> الاسم الكريم</label>
+        <input type="text" id="customerName" class="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:border-brand-500 outline-none" />
       </div>
-
-      <!-- الهاتف -->
       <div>
-        <label class="block text-gray-600 font-semibold mb-1.5 text-sm">
-          <i class="fas fa-phone text-brand-600 ml-1"></i>
-          رقم الهاتف <span class="text-red-500">*</span>
-        </label>
-        <input
-          type="tel"
-          id="customerPhone"
-          placeholder="05xxxxxxxx"
-          autocomplete="tel"
-          dir="ltr"
-          class="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm
-                 focus:border-brand-500 focus:outline-none transition text-left"
-        />
+        <label class="block text-gray-600 font-semibold mb-1.5 text-sm"><i class="fas fa-phone text-brand-600 ml-1"></i> رقم الهاتف</label>
+        <input type="tel" id="customerPhone" dir="ltr" class="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:border-brand-500 outline-none text-left" />
       </div>
-
-      <!-- ملاحظات -->
       <div>
-        <label class="block text-gray-600 font-semibold mb-1.5 text-sm">
-          <i class="fas fa-comment text-brand-600 ml-1"></i>
-          ملاحظات إضافية (اختياري)
-        </label>
-        <textarea
-          id="customerNotes"
-          placeholder="أي تعليمات خاصة أو عنوان التوصيل…"
-          rows="3"
-          class="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm
-                 focus:border-brand-500 focus:outline-none transition resize-none"
-        ></textarea>
+        <label class="block text-gray-600 font-semibold mb-1.5 text-sm"><i class="fas fa-comment text-brand-600 ml-1"></i> ملاحظات</label>
+        <textarea id="customerNotes" rows="2" class="w-full border-2 border-gray-200 rounded-xl px-4 py-2 focus:border-brand-500 outline-none resize-none"></textarea>
       </div>
-
-      <!-- الأزرار -->
       <div class="flex gap-3 pt-1">
-        <button
-          id="submitOrderBtn"
-          onclick="submitOrder()"
-          class="flex-1 bg-brand-600 text-white py-3 rounded-xl font-bold
-                 hover:bg-brand-700 active:scale-[0.98] transition-all
-                 flex items-center justify-center gap-2"
-        >
-          <i class="fab fa-telegram text-lg"></i> إرسال الطلب
+        <button id="submitOrderBtn" onclick="submitOrder()" class="flex-1 bg-brand-600 text-white py-3 rounded-xl font-bold hover:bg-brand-700 transition">
+          <i class="fab fa-telegram ml-1"></i> إرسال الطلب
         </button>
-        <button
-          onclick="closeOrderModal()"
-          class="px-5 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-200 transition"
-        >
-          إلغاء
-        </button>
+        <button onclick="closeOrderModal()" class="px-5 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-200 transition">إلغاء</button>
       </div>
     </div>
   </div>
 </div>
 
-
-<!-- ══════════════════════════════════════════════════════════
-     ✅  نافذة نجاح الطلب  (Success Modal)
-════════════════════════════════════════════════════════════ -->
 <div id="successModal" class="modal-backdrop fixed inset-0 z-70 hidden items-center justify-center p-4">
   <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
   <div class="modal-content relative bg-white rounded-2xl shadow-2xl w-full max-w-sm text-center p-8">
-    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-      <i class="fas fa-check-circle text-brand-600 text-5xl"></i>
-    </div>
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">تم إرسال طلبك! 🎉</h2>
-    <p class="text-gray-500 leading-relaxed mb-6">
-      وصل طلبك بنجاح عبر تيليجرام.<br />
-      سيتواصل معك أحد أفراد العائلة قريباً.
-    </p>
-    <button
-      onclick="closeSuccessModal()"
-      class="bg-brand-600 text-white px-8 py-3 rounded-xl font-bold
-             hover:bg-brand-700 transition"
-    >
-      ممتاز، شكراً! 👍
-    </button>
+    <i class="fas fa-check-circle text-brand-600 text-6xl mb-4"></i>
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">تم إرسال طلبك!</h2>
+    <p id="successOrderId" class="font-bold text-gray-700 mb-1 bg-gray-100 py-1 rounded-lg mx-8"></p>
+    <p class="text-gray-500 mb-6 text-sm">تم الحفظ في (طلباتي) لسهولة التتبع</p>
+    <button onclick="closeSuccessModal()" class="bg-brand-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-brand-700 w-full">حسناً، شكراً</button>
   </div>
 </div>
 
-
-<!-- ══════════════════════════════════════════════════════════
-     🔐  نافذة تسجيل دخول المدير  (Admin Login Modal)
-════════════════════════════════════════════════════════════ -->
 <div id="adminLoginModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
   <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeAdminLogin()"></div>
   <div class="modal-content relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8">
-
     <div class="text-center mb-6">
-      <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
-        <i class="fas fa-shield-alt text-amber-500 text-2xl"></i>
-      </div>
-      <h2 class="text-2xl font-bold text-gray-800">لوحة التحكم</h2>
-      <p class="text-gray-400 text-sm mt-1">أدخل كلمة المرور للمتابعة</p>
+      <i class="fas fa-shield-alt text-amber-500 text-4xl mb-2"></i>
+      <h2 class="text-2xl font-bold">لوحة التحكم</h2>
     </div>
-
-    <input
-      type="password"
-      id="adminPasswordInput"
-      placeholder="كلمة المرور"
-      onkeypress="if(event.key==='Enter') adminLogin()"
-      class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 mb-3
-             text-center text-lg tracking-widest focus:border-amber-400 focus:outline-none transition"
-    />
-
-    <p id="adminLoginError"
-       class="hidden text-red-500 text-sm text-center mb-3 bg-red-50 py-2 rounded-lg">
-      <i class="fas fa-exclamation-triangle ml-1"></i> كلمة المرور غير صحيحة!
-    </p>
-
-    <div class="flex gap-3">
-      <button
-        onclick="adminLogin()"
-        class="flex-1 bg-amber-500 text-white py-3 rounded-xl font-bold
-               hover:bg-amber-600 transition flex items-center justify-center gap-2"
-      >
-        <i class="fas fa-sign-in-alt"></i> دخول
-      </button>
-      <button
-        onclick="closeAdminLogin()"
-        class="px-5 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-200 transition"
-      >
-        إلغاء
-      </button>
-    </div>
+    <input type="password" id="adminPasswordInput" placeholder="كلمة المرور" onkeypress="if(event.key==='Enter') adminLogin()" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 mb-3 text-center tracking-widest focus:border-amber-400 outline-none" />
+    <p id="adminLoginError" class="hidden text-red-500 text-sm text-center mb-3 bg-red-50 py-2 rounded-lg">كلمة المرور غير صحيحة!</p>
+    <button onclick="adminLogin()" class="w-full bg-amber-500 text-white py-3 rounded-xl font-bold hover:bg-amber-600">دخول</button>
   </div>
 </div>
 
-
-<!-- ══════════════════════════════════════════════════════════
-     ⚙️  لوحة تحكم المدير  (Admin Panel — Full Screen Overlay)
-════════════════════════════════════════════════════════════ -->
 <div id="adminPanel" class="fixed inset-0 z-50 hidden bg-gray-100 overflow-y-auto admin-panel-slide">
-
-  <!-- شريط المدير العلوي -->
   <header class="bg-amber-500 text-white sticky top-0 z-10 shadow-lg">
-    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <i class="fas fa-cogs text-xl"></i>
-        <div class="leading-tight">
-          <h1 class="font-bold text-lg">لوحة تحكم المدير</h1>
-          <p class="text-amber-100 text-xs hidden sm:block">إدارة منتجات البقالة</p>
-        </div>
-      </div>
-      <button
-        onclick="closeAdminPanel()"
-        class="bg-white text-amber-600 px-4 py-2 rounded-xl font-bold
-               hover:bg-amber-50 transition flex items-center gap-2 text-sm"
-      >
-        <i class="fas fa-sign-out-alt"></i>
-        <span class="hidden sm:inline">خروج</span>
-      </button>
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 class="font-bold text-lg"><i class="fas fa-cogs ml-2"></i> الإدارة</h1>
+      <button onclick="adminLogout()" class="bg-white text-amber-600 px-4 py-2 rounded-xl font-bold text-sm"><i class="fas fa-sign-out-alt"></i> خروج</button>
     </div>
   </header>
 
-  <div class="max-w-4xl mx-auto px-4 py-8 space-y-6">
-
-    <!-- ➕ بطاقة إضافة منتج جديد -->
+  <div class="max-w-5xl mx-auto px-4 py-8 space-y-6">
     <div class="bg-white rounded-2xl shadow-md p-6">
-      <h2 class="text-base font-bold text-gray-800 mb-5 flex items-center gap-2">
-        <span class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-          <i class="fas fa-plus text-brand-600 text-sm"></i>
-        </span>
-        إضافة منتج جديد
-      </h2>
-
+      <h2 class="text-base font-bold text-gray-800 mb-5"><i class="fas fa-box text-blue-500 ml-1"></i> إدارة المنتجات</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <div>
-          <label class="admin-label">اسم المنتج <span class="text-red-500">*</span></label>
-          <input type="text" id="adminProductName" placeholder="مثال: تمر مجدول" class="admin-input" />
-        </div>
-        <div>
-          <label class="admin-label">السعر (ريال) <span class="text-red-500">*</span></label>
-          <input type="number" id="adminProductPrice" placeholder="25.50" min="0" step="0.5" class="admin-input" />
-        </div>
-        <div>
-          <label class="admin-label">الكمية المتاحة <span class="text-red-500">*</span></label>
-          <input type="number" id="adminProductQuantity" placeholder="50" min="0" class="admin-input" />
-        </div>
-        <div>
-          <label class="admin-label">رابط الصورة (اختياري)</label>
-          <input type="url" id="adminProductImage" placeholder="https://…" dir="ltr" class="admin-input text-left" />
-        </div>
+        <div><label class="admin-label">اسم المنتج</label><input type="text" id="adminProductName" class="admin-input" /></div>
+        <div><label class="admin-label">السعر</label><input type="number" id="adminProductPrice" class="admin-input" /></div>
+        <div><label class="admin-label">الكمية</label><input type="number" id="adminProductQuantity" class="admin-input" /></div>
+        <div><label class="admin-label">رابط الصورة</label><input type="url" id="adminProductImage" dir="ltr" class="admin-input" /></div>
       </div>
-
-      <div class="flex gap-3 flex-wrap">
-        <button
-          id="addProductBtn"
-          onclick="addProduct()"
-          class="bg-brand-600 text-white px-6 py-2.5 rounded-xl font-bold
-                 hover:bg-brand-700 transition flex items-center gap-2 text-sm"
-        >
-          <i class="fas fa-plus-circle"></i> إضافة المنتج
-        </button>
-        <button
-          onclick="clearAdminForm()"
-          class="bg-gray-100 text-gray-600 px-5 py-2.5 rounded-xl font-bold
-                 hover:bg-gray-200 transition text-sm"
-        >
-          <i class="fas fa-eraser ml-1"></i> مسح
-        </button>
+      <button id="addProductBtn" onclick="addProduct()" class="bg-brand-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm"><i class="fas fa-plus ml-1"></i> إضافة منتج</button>
+      <div class="mt-6 pt-4 border-t border-gray-100">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="font-bold text-gray-700">المنتجات الحالية</h3>
+          <span id="adminProductCount" class="text-sm font-bold bg-gray-100 px-3 py-1 rounded-lg"></span>
+        </div>
+        <div id="adminProductsList" class="space-y-3"></div>
       </div>
     </div>
 
-    <!-- 📋 قائمة المنتجات الحالية -->
-    <div class="bg-white rounded-2xl shadow-md p-6">
-      <h2 class="text-base font-bold text-gray-800 mb-5 flex items-center gap-2">
-        <span class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-          <i class="fas fa-list text-blue-600 text-sm"></i>
-        </span>
-        المنتجات الحالية
-        <span id="adminProductCount" class="text-xs text-gray-400 font-normal mr-auto"></span>
-      </h2>
-      <div id="adminProductsList" class="space-y-3"></div>
+    <div class="bg-white rounded-2xl shadow-md p-6 border-2 border-amber-100">
+      <h2 class="text-base font-bold text-gray-800 mb-5"><i class="fas fa-layer-group text-amber-500 ml-1"></i> إدارة الباقات الترويجية</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div><label class="admin-label">اسم الباقة</label><input type="text" id="bundleName" class="admin-input" /></div>
+        <div><label class="admin-label">سعر الباقة (بعد الخصم)</label><input type="number" id="bundlePrice" class="admin-input" /></div>
+        <div><label class="admin-label">السعر الأصلي (اختياري)</label><input type="number" id="bundleOriginalPrice" class="admin-input" /></div>
+        <div><label class="admin-label">رابط الصورة</label><input type="url" id="bundleImage" dir="ltr" class="admin-input" /></div>
+        <div class="sm:col-span-2">
+          <label class="admin-label">المنتجات المشمولة (استخدم Ctrl لاختيار أكثر من منتج)</label>
+          <select id="bundleProducts" multiple class="admin-input h-28 p-2"></select>
+        </div>
+      </div>
+      <button id="addBundleBtn" onclick="addBundle()" class="bg-amber-500 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-amber-600"><i class="fas fa-plus ml-1"></i> إضافة الباقة</button>
+      <div class="mt-6 pt-4 border-t border-gray-100">
+        <h3 class="font-bold text-gray-700 mb-3">الباقات الحالية</h3>
+        <div id="adminBundlesList" class="space-y-3"></div>
+      </div>
     </div>
   </div>
 </div>
 
-
-<!-- ══════════════════════════════════════════════════════════
-     ✏️  نافذة تعديل المنتج  (Edit Modal)
-         تفتح فوق لوحة التحكم  —  z-index أعلى من z-50
-════════════════════════════════════════════════════════════ -->
 <div id="editModal" class="modal-backdrop fixed inset-0 z-60 hidden items-center justify-center p-4">
   <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeEditModal()"></div>
   <div class="modal-content relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-
-    <!-- رأس -->
-    <div class="bg-gradient-to-r from-blue-700 to-blue-500 text-white p-5">
-      <h2 class="text-xl font-bold flex items-center gap-2">
-        <i class="fas fa-edit"></i> تعديل المنتج
-      </h2>
-    </div>
-
+    <div class="bg-blue-600 text-white p-5"><h2 class="text-xl font-bold"><i class="fas fa-edit"></i> تعديل المنتج</h2></div>
     <div class="p-6 space-y-4">
       <input type="hidden" id="editProductId" />
-
-      <div>
-        <label class="admin-label">اسم المنتج</label>
-        <input type="text" id="editProductName" class="admin-input" />
-      </div>
+      <div><label class="admin-label">الاسم</label><input type="text" id="editProductName" class="admin-input" /></div>
       <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="admin-label">السعر (ريال)</label>
-          <input type="number" id="editProductPrice" min="0" step="0.5" class="admin-input" />
-        </div>
-        <div>
-          <label class="admin-label">الكمية المتاحة</label>
-          <input type="number" id="editProductQuantity" min="0" class="admin-input" />
-        </div>
+        <div><label class="admin-label">السعر</label><input type="number" id="editProductPrice" class="admin-input" /></div>
+        <div><label class="admin-label">الكمية</label><input type="number" id="editProductQuantity" class="admin-input" /></div>
       </div>
-      <div>
-        <label class="admin-label">رابط الصورة</label>
-        <input type="url" id="editProductImage" dir="ltr" class="admin-input text-left" />
-      </div>
-
-      <div class="flex gap-3 pt-1">
-        <button
-          onclick="saveEditProduct()"
-          class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold
-                 hover:bg-blue-700 transition flex items-center justify-center gap-2"
-        >
-          <i class="fas fa-save"></i> حفظ التعديلات
-        </button>
-        <button
-          onclick="closeEditModal()"
-          class="px-5 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-200 transition"
-        >
-          إلغاء
-        </button>
+      <div><label class="admin-label">الصورة</label><input type="url" id="editProductImage" dir="ltr" class="admin-input" /></div>
+      <div class="flex gap-3 pt-2">
+        <button onclick="saveEditProduct()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700">حفظ التعديلات</button>
+        <button onclick="closeEditModal()" class="px-5 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-200">إلغاء</button>
       </div>
     </div>
   </div>
 </div>
 
+<div id="editBundleModal" class="modal-backdrop fixed inset-0 z-60 hidden items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeEditBundleModal()"></div>
+  <div class="modal-content relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+    <div class="bg-amber-600 text-white p-5"><h2 class="text-xl font-bold"><i class="fas fa-edit"></i> تعديل الباقة</h2></div>
+    <div class="p-6 space-y-4">
+      <input type="hidden" id="editBundleId" />
+      <div><label class="admin-label">اسم الباقة</label><input type="text" id="editBundleName" class="admin-input" /></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="admin-label">السعر النهائي</label><input type="number" id="editBundlePrice" class="admin-input" /></div>
+        <div><label class="admin-label">السعر الأصلي</label><input type="number" id="editBundleOriginalPrice" class="admin-input" /></div>
+      </div>
+      <div><label class="admin-label">الصورة</label><input type="url" id="editBundleImage" dir="ltr" class="admin-input" /></div>
+      <div>
+        <label class="admin-label">المنتجات</label>
+        <select id="editBundleProducts" multiple class="admin-input h-20 p-2"></select>
+      </div>
+      <div class="flex items-center gap-2 mt-2">
+        <input type="checkbox" id="editBundleActive" class="w-4 h-4 text-amber-600 rounded border-gray-300">
+        <label class="text-sm font-bold text-gray-700">الباقة نشطة (تظهر للزبائن)</label>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button onclick="saveEditBundle()" class="flex-1 bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700">حفظ التعديلات</button>
+        <button onclick="closeEditBundleModal()" class="px-5 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-200">إلغاء</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-<!-- ══════════════════════════════════════════════════════════
-     🔔  إشعار Toast  (Toast Notification)
-         يظهر دائماً فوق كل شيء
-════════════════════════════════════════════════════════════ -->
 <div id="toast" class="fixed bottom-6 left-6 z-99 hidden">
-  <div class="toast-inner bg-gray-900 text-white px-5 py-3 rounded-xl shadow-2xl
-              flex items-center gap-3 text-sm max-w-xs">
+  <div class="toast-inner bg-gray-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm max-w-xs">
     <i id="toastIcon" class="fas fa-check-circle text-green-400 text-lg flex-shrink-0"></i>
     <span id="toastMessage">رسالة</span>
   </div>
 </div>
 
-
-<!-- ══════════════════════════════════════════════════════════
-     🔥  Firebase V9 Modular  (ES Module — type="module")
-         يجب أن يكون آخر سكريبت في الصفحة
-════════════════════════════════════════════════════════════ -->
 <script type="module" src="app.js"></script>
-
 </body>
 </html>
