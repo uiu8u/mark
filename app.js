@@ -71,7 +71,7 @@ let lastOrderId = null; // آخر رقم طلب (لعرضه في نافذة ال
  * @param {number} width  - العرض المطلوب بالبكسل (افتراضي 300)
  */
 function optimizeImage(url, width = 300) {
-  if (!url) return `https://via.placeholder.com/${width}`;
+  if (!url) return `https://placehold.co/${width}x${width}/e2e8f0/94a3b8?text=%D8%A8%D9%82%D8%A7%D9%84%D8%A9`;
   if (url.startsWith("data:") || url.includes("weserv.nl") || url.includes("placeholder.com"))
     return url;
   try {
@@ -203,7 +203,7 @@ function renderCart() {
           <img src="${optimizeImage(item.image, 64)}"
                class="w-14 h-14 object-cover rounded-xl border border-gray-100 flex-shrink-0"
                loading="lazy"
-               onerror="this.src='https://via.placeholder.com/64'">
+               onerror="this.src='https://placehold.co/64x64/e2e8f0/94a3b8?text=...'">
           <div class="flex-1 min-w-0">
             <h4 class="font-bold text-gray-800 text-sm truncate">${item.name}</h4>
             <p class="text-brand-600 font-bold text-xs mt-0.5">${item.price} ريال × ${item.cartQuantity}</p>
@@ -287,7 +287,9 @@ window.submitOrder = async () => {
       customerName: name,
       phone,
       notes:        notes || "",
-      items:        realCartItems.map(i => ({ name: i.name, qty: i.cartQuantity, price: i.price })),
+      // ✅ نحفظ id المنتج وليس فقط الاسم — يسمح للخادم الوسيط (api/telegram.js)
+      // بإرجاع الكمية بدقة عند الإلغاء حتى لو غيّر الأدمن اسم المنتج لاحقاً
+      items:        realCartItems.map(i => ({ id: i.id, name: i.name, qty: i.cartQuantity, price: i.price })),
       totalAmount:  total,
       status:       "قيد المراجعة",
       createdAt:    new Date(),
@@ -574,7 +576,7 @@ function renderBundles() {
         <img src="${imgSrc}" alt="${b.name}"
              class="w-full h-32 object-cover"
              loading="lazy"
-             onerror="this.src='https://placehold.co/280x128/e2e8f0/94a3b8?text=Bundle'">
+             onerror="this.src='https://placehold.co/280x128/fef3c7/b45309?text=Bundle'">
         ${saving ? `<div class="absolute top-2 right-2">
           <span class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
             وفّر ${saving} ريال
@@ -603,6 +605,12 @@ function renderBundles() {
 window.addBundleToCart = (bundleId) => {
   const bundle = bundles.find(b => b.id === bundleId);
   if (!bundle) return;
+
+  // ✅ منع إضافة نفس الباقة مرتين: تكرار الإضافة كان يضاعف كميات المنتجات
+  // بينما يبقى الخصم محسوباً مرة واحدة فقط (تكلفة أعلى للزبون بلا تفسير واضح بالسلة)
+  if (cart.find(i => i.id === `discount-${bundleId}`)) {
+    showToast("الباقة موجودة بالفعل في سلتك", "error"); return;
+  }
 
   const bundleProducts = (bundle.productIds || [])
     .map(id => products.find(p => p.id === id))
@@ -772,7 +780,7 @@ function renderAdminProducts() {
       <div class="flex items-center gap-3 min-w-0">
         <img src="${optimizeImage(p.image, 48)}" alt="${p.name}"
              class="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0"
-             loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
+             loading="lazy" onerror="this.src='https://placehold.co/48x48/e2e8f0/94a3b8?text=...'">
         <div class="min-w-0">
           <h4 class="font-bold text-gray-800 text-sm truncate">${p.name}</h4>
           <p class="text-xs text-gray-500 mt-0.5">
@@ -913,7 +921,7 @@ function renderAdminBundles() {
       <div class="flex items-center gap-3 min-w-0">
         <img src="${optimizeImage(b.image, 48)}" alt="${b.name}"
              class="w-12 h-12 rounded-lg object-cover border border-amber-100 flex-shrink-0"
-             loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
+             loading="lazy" onerror="this.src='https://placehold.co/48x48/e2e8f0/94a3b8?text=...'">
         <div class="min-w-0">
           <h4 class="font-bold text-gray-800 text-sm truncate">${b.name}</h4>
           <p class="text-xs text-gray-500 mt-0.5">
