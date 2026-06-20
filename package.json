@@ -1,7 +1,12 @@
 {
   "name": "market-backend",
   "version": "1.0.0",
+  "description": "Vercel serverless proxy لتيليجرام + webhook لتأكيد/إلغاء الطلبات",
+  "main": "api/telegram.js",
   "dependencies": {
     "firebase-admin": "^12.0.0"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }
