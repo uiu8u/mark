@@ -56,6 +56,8 @@ module.exports = async function handler(req, res) {
   //    وليس شخصاً يحاكي POST مباشرة لنفس الـ endpoint من متصفحه)
   // ════════════════════════════════════════════════════════════════════
   const incomingSecret = req.headers['x-telegram-bot-api-secret-token'];
+  console.log("كلمة السر في Vercel هي:", WEBHOOK_SECRET);
+console.log("كلمة السر القادمة من تيليجرام هي:", incomingSecret);
   if (WEBHOOK_SECRET && incomingSecret !== WEBHOOK_SECRET) {
     console.warn('⚠️ Webhook secret mismatch — تم رفض الطلب');
     return res.status(401).json({ error: 'Unauthorized' });
