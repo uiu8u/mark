@@ -1,6 +1,6 @@
 const admin = require('firebase-admin');
 
-// 1. تهيئة جدار الإدارة (Admin SDK)
+// 1. تهيئة جدار الإدارة
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert({
@@ -14,11 +14,16 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 module.exports = async function handler(req, res) {
-  // 🔒 طبقة حماية: للتأكد من أن نظام Vercel المجدول هو فقط من يستدعي هذا الرابط
-  // (تمنع أي شخص خارجي من استدعاء الرابط وحذف البيانات يدوياً)
-  const cronHeader = req.headers['x-vercel-cron'];
-  if (process.env.NODE_ENV === 'production' && !cronHeader) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  // 🔒 تحديث الحماية: استخدام معيار Vercel الجديد (CRON_SECRET)
+  const authHeader = req.headers['authorization'];
+  
+  // التحقق من أن الطلب قادم فعلياً من نظام Vercel المجدول
+  if (
+      authHeader !== `Bearer ${process.env.CRON_SECRET}` && 
+      !req.headers['x-vercel-cron']
+  ) {
+      console.warn('⚠️ محاولة وصول غير مصرح بها لملف التنظيف');
+      return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
@@ -27,7 +32,6 @@ module.exports = async function handler(req, res) {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     // 🔍 البحث عن الطلبات القديمة
-    // ⚠️ تنبيه هندسي: تأكدي أن اسم حقل التاريخ في مستند الطلب لديكِ هو 'timestamp' أو غيريه للاسم الفعلي (مثل createdAt)
     const snapshot = await db.collection('orders')
       .where('timestamp', '<', thirtyDaysAgo)
       .get();
@@ -36,7 +40,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ message: 'لا توجد طلبات قديمة لحذفها حالياً.' });
     }
 
-    // 🤝 حذف جماعي (Batch Delete) لتوفير العمليات وسرعة الأداء
+    // 🤝 حذف جماعي (Batch Delete)
     const batch = db.batch();
     snapshot.docs.forEach((doc) => {
       batch.delete(doc.ref);
