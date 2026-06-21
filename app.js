@@ -379,11 +379,17 @@ function updateOrderBadge() {
   const orders = JSON.parse(localStorage.getItem("my_orders") || "[]");
   const badge  = document.getElementById("orderBadge");
   if (!badge) return;
-  if (orders.length > 0) {
-    badge.textContent = orders.length;
-    badge.classList.remove("hidden"); badge.classList.add("flex");
+  const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+  const cutoff = Date.now() - TWELVE_HOURS_MS;
+  const currentOrdersCount = orders.filter(o => (o.timestamp || 0) >= cutoff).length;
+
+  if (currentOrdersCount > 0) {
+    badge.textContent = currentOrdersCount;
+    badge.classList.remove("hidden");
+    badge.classList.add("flex");
   } else {
-    badge.classList.add("hidden"); badge.classList.remove("flex");
+    badge.classList.add("hidden");
+    badge.classList.remove("flex");
   }
 }
 
