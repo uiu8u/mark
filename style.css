@@ -138,3 +138,13 @@ body {
 .product-img.loaded { background: transparent; }
 
 img { -webkit-user-drag: none; }
+/* ── 13. تبويبات طلباتي (حالية / سجل) ── */
+.order-tab {
+  color: #9ca3af;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.order-tab-active {
+  color: #16a34a;
+  border-bottom-color: #16a34a;
+}
