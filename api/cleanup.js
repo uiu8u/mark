@@ -31,8 +31,8 @@ module.exports = async function handler(req, res) {
     const now = new Date();
 
     const snapshot = await db.collection('orders')
-      .where('expireAt', '<', now)
-      .get();
+    .where('expireAt', '<', now)
+    .get();
 
     if (snapshot.empty) {
       return res.status(200).json({ message: 'لا توجد طلبات قديمة لحذفها حالياً.' });
@@ -54,4 +54,3 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 };
-
