@@ -1079,16 +1079,20 @@ window.showToast = showToast;
 // ============================================================================
 updateCartUI();
 updateOrderBadge();
-// توليد بطاقات التحميل الوهمية (Skeleton Loading)
-document.getElementById("loadingState").innerHTML = Array(8).fill(`
-  <div class="animate-pulse bg-white rounded-2xl border border-gray-100 overflow-hidden">
-    <div class="w-full h-32 bg-gray-200"></div>
-    <div class="p-3 space-y-2">
-      <div class="h-3 bg-gray-200 rounded w-3/4"></div>
-      <div class="h-3 bg-gray-200 rounded w-1/2"></div>
-      <div class="flex justify-between items-center pt-2">
-        <div class="h-4 bg-gray-200 rounded w-12"></div>
-        <div class="h-9 w-9 bg-gray-200 rounded-xl"></div>
+
+// توليد بطاقات التحميل الوهمية (Skeleton Loading) بأمان
+const loadingStateElement = document.getElementById("loadingState");
+if (loadingStateElement) {
+  loadingStateElement.innerHTML = Array(8).fill(`
+    <div class="animate-pulse bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div class="w-full h-32 bg-gray-200"></div>
+      <div class="p-3 space-y-2">
+        <div class="h-3 bg-gray-200 rounded w-3/4"></div>
+        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+        <div class="flex justify-between items-center pt-2">
+          <div class="h-4 bg-gray-200 rounded w-12"></div>
+          <div class="h-9 w-9 bg-gray-200 rounded-xl"></div>
+        </div>
       </div>
-    </div>
-  </div>`).join("");
+    </div>`).join("");
+}
