@@ -362,14 +362,15 @@ function saveOrderLocally(orderId, total, itemNames) {
   const orders = JSON.parse(localStorage.getItem("my_orders") || "[]");
   orders.unshift({
     orderId,
+    timestamp: Date.now(),               // ◄ جديد — أساس فصل 12 ساعة
     date: new Date().toLocaleString("ar-SA", {
       year: "numeric", month: "short", day: "numeric",
       hour: "2-digit", minute: "2-digit"
     }),
     total,
-    items: itemNames.slice(0, 3) // نحفظ أسماء 3 منتجات فقط للعرض
+    items: itemNames.slice(0, 3)
   });
-  localStorage.setItem("my_orders", JSON.stringify(orders.slice(0, 20))); // نحتفظ بـ 20 طلب
+  localStorage.setItem("my_orders", JSON.stringify(orders.slice(0, 20)));
   updateOrderBadge();
 }
 
@@ -387,7 +388,9 @@ function updateOrderBadge() {
 }
 
 window.openOrderTracking = () => {
+  historyLoaded = false;
   renderMyOrders();
+  window.showOrdersTab("current");
   const modal = document.getElementById("orderTrackingModal");
   modal.classList.remove("hidden"); modal.classList.add("flex");
 };
@@ -396,22 +399,47 @@ window.closeOrderTracking = () => {
   modal.classList.add("hidden"); modal.classList.remove("flex");
 };
 
-function renderMyOrders() {
-  const orders    = JSON.parse(localStorage.getItem("my_orders") || "[]");
-  const container = document.getElementById("myOrdersList");
-  if (!container) return;
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+let historyLoaded = false;
 
-  if (orders.length === 0) {
-    container.innerHTML = `
-      <div class="flex flex-col items-center justify-center py-12 text-gray-400 gap-2">
-        <i class="fas fa-box-open text-5xl"></i>
-        <p class="font-semibold mt-2">لا توجد طلبات سابقة</p>
-        <p class="text-xs">ستظهر طلباتك هنا بعد إتمام أول طلب</p>
-      </div>`;
-    return;
+function getOrderBuckets() {
+  const orders = JSON.parse(localStorage.getItem("my_orders") || "[]");
+  const cutoff = Date.now() - TWELVE_HOURS_MS;
+  return {
+    current: orders.filter(o => (o.timestamp || 0) >= cutoff),
+    history: orders.filter(o => (o.timestamp || 0) < cutoff)
+  };
+}
+
+/** جلب جماعي من Firestore بفلتر زمني — لا يُستدعى إلا عند الحاجة */
+async function fetchOrdersStatusBatch(orders, { after = null, before = null } = {}) {
+  if (orders.length === 0) return {};
+  const ids = orders.map(o => o.orderId).slice(0, 30); // حد "in" في Firestore
+  const constraints = [where("orderId", "in", ids)];
+  if (after)  constraints.push(where("createdAt", ">=", after));
+  if (before) constraints.push(where("createdAt", "<",  before));
+
+  const statusMap = {};
+  try {
+    const snap = await getDocs(query(collection(db, "orders"), ...constraints));
+    snap.forEach(d => { statusMap[d.data().orderId] = d.data().status; });
+  } catch (err) {
+    console.warn("Batch status fetch error (قد يحتاج composite index، رابط الإنشاء يظهر في الـ console):", err);
   }
+  return statusMap;
+}
 
-  container.innerHTML = orders.map(o => `
+function orderCardHTML(o, status) {
+  const cls = {
+    "قيد المراجعة": "status-pending", "تم التأكيد": "status-confirm",
+    "قيد التجهيز": "status-prep", "في الطريق": "status-transit",
+    "تم التسليم": "status-done", "ملغي": "status-cancel"
+  }[status] || "status-pending";
+  const statusInner = status
+    ? `<span class="status-badge ${cls}">${status}</span>`
+    : `<span class="text-xs text-gray-400">اضغط للتحقق من الحالة</span>`;
+
+  return `
     <div class="p-4 border border-gray-100 rounded-xl bg-gray-50 hover:bg-white transition">
       <div class="flex justify-between items-start mb-2">
         <div>
@@ -422,17 +450,63 @@ function renderMyOrders() {
       </div>
       <p class="text-gray-400 text-xs mb-3">${o.items.join(" · ")}${o.items.length < 3 ? "" : "…"}</p>
       <div class="flex items-center justify-between">
-        <span id="status-${o.orderId}" class="text-xs text-gray-400">
-          اضغط للتحقق من الحالة
-        </span>
+        <span id="status-${o.orderId}">${statusInner}</span>
         <button onclick="checkOrderStatus('${o.orderId}')"
           class="text-xs bg-brand-600 text-white px-3 py-1.5 rounded-lg hover:bg-brand-700 transition flex items-center gap-1">
           <i class="fas fa-sync-alt"></i> تحديث
         </button>
       </div>
-    </div>
-  `).join("");
+    </div>`;
 }
+
+function renderOrdersList(containerId, orders, statusMap) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (orders.length === 0) {
+    container.innerHTML = `
+      <div class="flex flex-col items-center justify-center py-12 text-gray-400 gap-2">
+        <i class="fas fa-box-open text-5xl"></i>
+        <p class="font-semibold mt-2">لا توجد طلبات</p>
+      </div>`;
+    return;
+  }
+  container.innerHTML = orders.map(o => orderCardHTML(o, statusMap[o.orderId])).join("");
+}
+
+/** التحميل الافتراضي: الطلبات الحالية فقط (آخر 12 ساعة) */
+async function renderMyOrders() {
+  const { current } = getOrderBuckets();
+  renderOrdersList("currentOrdersList", current, {});
+  const cutoff = new Date(Date.now() - TWELVE_HOURS_MS);
+  const statusMap = await fetchOrdersStatusBatch(current, { after: cutoff });
+  renderOrdersList("currentOrdersList", current, statusMap);
+}
+
+/** Lazy load — لا تُجلب بيانات السجل القديم من Firestore إلا هنا */
+window.showOrdersTab = async (tab) => {
+  const currentBtn = document.getElementById("tabCurrentBtn");
+  const historyBtn = document.getElementById("tabHistoryBtn");
+  const currentList = document.getElementById("currentOrdersList");
+  const historyList = document.getElementById("historyOrdersList");
+
+  if (tab === "current") {
+    currentBtn.classList.add("order-tab-active"); historyBtn.classList.remove("order-tab-active");
+    currentList.classList.remove("hidden"); historyList.classList.add("hidden");
+    return;
+  }
+
+  currentBtn.classList.remove("order-tab-active"); historyBtn.classList.add("order-tab-active");
+  currentList.classList.add("hidden"); historyList.classList.remove("hidden");
+
+  if (!historyLoaded) {
+    historyLoaded = true;
+    const { history } = getOrderBuckets();
+    renderOrdersList("historyOrdersList", history, {});
+    const cutoff = new Date(Date.now() - TWELVE_HOURS_MS);
+    const statusMap = await fetchOrdersStatusBatch(history, { before: cutoff });
+    renderOrdersList("historyOrdersList", history, statusMap);
+  }
+};
 
 /** يستعلم عن حالة طلب واحد من Firestore (Single Read) */
 window.checkOrderStatus = async (orderId) => {
