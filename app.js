@@ -247,6 +247,11 @@ window.closeSuccessModal = () => {
 };
 
 window.submitOrder = async () => {
+  if (!navigator.onLine) {
+    showToast("عذراً، أنت غير متصل بالإنترنت. يرجى الاتصال لإرسال الطلب.", "error");
+    return;
+  }
+
   const name  = document.getElementById("customerName").value.trim();
   const phone = document.getElementById("customerPhone").value.trim();
   const notes = document.getElementById("customerNotes").value.trim();
@@ -1072,7 +1077,6 @@ function showToast(message, type = "success") {
   toastTimer = setTimeout(() => toast.classList.add("hidden"), 3500);
 }
 window.showToast = showToast;
-
 
 // ============================================================================
 // 13. التهيئة الأولية
