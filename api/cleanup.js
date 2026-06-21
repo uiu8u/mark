@@ -28,12 +28,10 @@ module.exports = async function handler(req, res) {
 
   try {
     // حساب تاريخ قبل 30 يوماً من الآن
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const now = new Date();
 
-    // 🔍 البحث عن الطلبات القديمة
     const snapshot = await db.collection('orders')
-      .where('timestamp', '<', thirtyDaysAgo)
+      .where('expireAt', '<', now)
       .get();
 
     if (snapshot.empty) {
