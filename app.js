@@ -12,11 +12,11 @@ import {
   persistentLocalCache,    // ✅ الكاش المحلي (IndexedDB)
   persistentMultipleTabManager, // ✅ دعم أكثر من تاب مفتوح
   collection, getDocs, addDoc, updateDoc, deleteDoc,
-  doc, runTransaction, onSnapshot, query, where
+  doc, runTransaction, onSnapshot, query, where, limit
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 import {
-  getAuth, signInWithEmailAndPassword, signOut
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 
@@ -520,8 +520,9 @@ window.checkOrderStatus = async (orderId) => {
   if (!el) return;
   el.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ التحقق…';
   try {
-    const q    = query(collection(db, "orders"), where("orderId", "==", orderId));
-    const snap = await getDocs(q);
+    // ◄ تمت إضافة limit(1) لمنع استمرار البحث بعد إيجاد الطلب
+  const q = query(collection(db, "orders"), where("orderId", "==", orderId), limit(1));
+  const snap = await getDocs(q);
     if (snap.empty) {
       el.innerHTML = '<span class="text-red-400 text-xs">لم يُعثر على الطلب</span>';
       return;
@@ -623,15 +624,35 @@ window.retryConnection = () => location.reload();
 // ============================================================================
 
 // Real-time listener للباقات
-onSnapshot(collection(db, "bundles"), snap => {
-  bundles = snap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .filter(b => b.isActive !== false); // نعرض النشطة فقط (فلترة على الجهاز)
-  renderBundles();
-  if (!document.getElementById("adminPanel").classList.contains("hidden"))
-    renderAdminBundles();
-}, err => console.warn("Bundles listener error:", err));
+// ◄ مستمع ذكي واحد للباقات (يتبدل حسب حالة الدخول لترشيد القراءات)
+let bundlesUnsubscribe = null;
 
+function initBundlesListener(isAdmin) {
+  if (bundlesUnsubscribe) bundlesUnsubscribe();
+
+  const bundlesRef = collection(db, "bundles");
+  const q = isAdmin ? bundlesRef : query(bundlesRef, where("isActive", "!=", false));
+
+  bundlesUnsubscribe = onSnapshot(q, (snap) => {
+    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    if (isAdmin) {
+      window._allBundles = docs;                        // الكل (نشطة + مخفية) — للوحة الأدمن
+      bundles = docs.filter(b => b.isActive !== false);  // المعروضة في المتجر
+    } else {
+      bundles = docs; // الفلترة تمت على السيرفر أصلاً عبر where
+    }
+
+    renderBundles();
+    if (isAdmin && !document.getElementById("adminPanel").classList.contains("hidden")) {
+      renderAdminBundles();
+    }
+  }, err => console.warn("Bundles listener error:", err));
+}
+
+onAuthStateChanged(auth, (user) => {
+  initBundlesListener(!!user);
+});
 /** يعرض الباقات في قسم الباقات الترويجية */
 function renderBundles() {
   const section = document.getElementById("bundlesSection");
@@ -785,6 +806,7 @@ window.closeAdminPanel = () => {
 // ── CRUD المنتجات ────────────────────────────────────────────────────────────
 
 window.addProduct = async () => {
+  if (document.getElementById("addProductBtn").disabled) return; // ◄ السطر المضاف
   const name = document.getElementById("adminProductName").value.trim();
   const price    = parseFloat(document.getElementById("adminProductPrice").value);
   const quantity = parseInt(document.getElementById("adminProductQuantity").value);
@@ -902,6 +924,7 @@ function populateBundleProductSelect(selectId, selectedIds = []) {
 }
 
 window.addBundle = async () => {
+  if (document.getElementById("addBundleBtn").disabled) return; // ◄ السطر المضاف
   const name      = document.getElementById("bundleName").value.trim();
   const image     = document.getElementById("bundleImage").value.trim();
   const origPrice = parseFloat(document.getElementById("bundleOriginalPrice").value) || null;
@@ -1030,12 +1053,6 @@ function renderAdminBundles() {
     </div>`).join("");
 }
 
-// Listener لجميع الباقات (نشطة + مخفية) — للمدير فقط
-onSnapshot(collection(db, "bundles"), snap => {
-  window._allBundles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  if (!document.getElementById("adminPanel").classList.contains("hidden"))
-    renderAdminBundles();
-});
 
 
 // ============================================================================
@@ -1062,3 +1079,16 @@ window.showToast = showToast;
 // ============================================================================
 updateCartUI();
 updateOrderBadge();
+// توليد بطاقات التحميل الوهمية (Skeleton Loading)
+document.getElementById("loadingState").innerHTML = Array(8).fill(`
+  <div class="animate-pulse bg-white rounded-2xl border border-gray-100 overflow-hidden">
+    <div class="w-full h-32 bg-gray-200"></div>
+    <div class="p-3 space-y-2">
+      <div class="h-3 bg-gray-200 rounded w-3/4"></div>
+      <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+      <div class="flex justify-between items-center pt-2">
+        <div class="h-4 bg-gray-200 rounded w-12"></div>
+        <div class="h-9 w-9 bg-gray-200 rounded-xl"></div>
+      </div>
+    </div>
+  </div>`).join("");
